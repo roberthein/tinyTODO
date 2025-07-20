@@ -325,15 +325,6 @@ do {
 - No data races or warnings
 - Proper actor isolation boundaries
 
-## Contributing
-
-We welcome contributions! Please ensure all code maintains:
-
-- Swift 6 strict concurrency compliance
-- tinyTCA architectural patterns
-- SwiftData best practices
-- Comprehensive test coverage
-
 ## License
 
 tinyTODO is available under the MIT license. See LICENSE file for more info.
