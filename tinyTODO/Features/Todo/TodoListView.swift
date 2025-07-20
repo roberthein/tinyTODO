@@ -19,7 +19,7 @@ struct TodoListView: View {
                     taskListContent
                 }
             }
-            .navigationTitle("Tasks")
+            .navigationTitle("tinyTODO")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Add") {
