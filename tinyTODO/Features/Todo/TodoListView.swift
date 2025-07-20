@@ -1,5 +1,6 @@
 import SwiftUI
 import tinyTCA
+import SwiftData
 
 struct TodoListView: View {
     @StoreState<TodoFeature> private var state: TodoFeature.State
@@ -9,125 +10,104 @@ struct TodoListView: View {
     }
 
     var body: some View {
-        NavigationView {
-            Group {
-                switch state.tasks {
-                case .idle:
-                    VStack {
-                        Text("Tap to load tasks")
-                            .foregroundColor(.secondary)
-                        Button("Load Tasks") {
-                            $state.send(.loadTasks)
-                        }
-                        .buttonStyle(.borderedProminent)
-                    }
-
-                case .loading:
-                    VStack {
-                        ProgressView()
-                        Text("Loading tasks...")
-                            .foregroundColor(.secondary)
-                    }
-
-                case .success:
-                    List {
-                        ForEach(TaskGroup.allCases, id: \.self) { group in
-                            TaskGroupSectionView(
-                                group: group,
-                                tasks: state.groupedTasks[group] ?? [],
-                                onToggleTask: { id in
-                                    $state.send(.toggleTask(id: id))
-                                },
-                                onEditTask: { task in
-                                    $state.send(.editTask(task))
-                                },
-                                onDeleteTask: { id in
-                                    $state.send(.deleteTask(id: id))
-                                },
-                                onReorderTasks: { reorderedTasks in
-                                    $state.send(.reorderTasks(reorderedTasks, in: group))
-                                }
-                            )
-                        }
-                    }
-                    .refreshable {
-                        $state.send(.loadTasks)
-                    }
-
-                case .failure(let error):
-                    VStack {
-                        Text("Error: \(error)")
-                            .foregroundColor(.red)
-                            .multilineTextAlignment(.center)
-                        Button("Retry") {
-                            $state.send(.loadTasks)
-                        }
-                        .buttonStyle(.borderedProminent)
-                    }
-                    .padding()
+        NavigationStack {
+            ZStack {
+                if state.isLoading && state.taskGroups.isEmpty {
+                    ProgressView("Loading tasks...")
+                } else {
+                    taskListContent
                 }
             }
-            .navigationTitle("Todo List")
+            .navigationTitle("Tasks")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
+                    Button("Add") {
                         $state.send(.showAddTask)
-                    } label: {
-                        Image(systemName: "plus")
                     }
-                    .disabled(state.isLoading)
                 }
             }
-            .sheet(isPresented: Binding(
-                get: { state.showingAddTask },
-                set: { _ in $state.send(.hideAddTask) }
-            )) {
-                TaskEditView(
-                    state: $state.binding,
-                    editingTask: nil,
-                    sendAction: { action in $state.send(action) }
-                )
-            }
-            .sheet(item: Binding(
-                get: { state.editingTask },
-                set: { _ in $state.send(.clearEdit) }
-            )) { task in
-                TaskEditView(
-                    state: $state.binding,
-                    editingTask: task,
-                    sendAction: { action in $state.send(action) }
-                )
-            }
-            .alert("Error", isPresented: Binding(
-                get: { state.errorMessage != nil },
-                set: { _ in }
-            )) {
+            .sheet(
+                isPresented: .constant(state.showingAddTask),
+                onDismiss: {
+                    $state.send(.hideAddTask)
+                },
+                content: {
+                    AddTaskView { title, subtitle, dueDate in
+                        $state.send(.addTask(title: title, subtitle: subtitle, dueDate: dueDate))
+                        $state.send(.hideAddTask)
+                    } onCancel: {
+                        $state.send(.hideAddTask)
+                    }
+                    .modalConfiguration()
+                }
+            )
+            .sheet(
+                item: .constant(state.editingTask),
+                onDismiss: {
+                    $state.send(.editTask(nil))
+                },
+                content: { task in
+                    EditTaskView(task: task) { title, subtitle, dueDate in
+                        $state.send(.updateTask(task, title: title, subtitle: subtitle, dueDate: dueDate))
+                        $state.send(.editTask(nil))
+                    } onCancel: {
+                        $state.send(.editTask(nil))
+                    }
+                    .modalConfiguration()
+                }
+            )
+            .alert("Error", isPresented: .constant(state.errorMessage != nil)) {
                 Button("OK") {
-                    $state.send(.clearError)
+                    $state.send(.setError(nil))
                 }
             } message: {
                 Text(state.errorMessage ?? "")
             }
-            .onAppear {
-                $state.send(.loadTasks)
+            .task {
+                $state.send(.onAppear)
             }
+        }
+    }
+
+    @ViewBuilder
+    private var taskListContent: some View {
+        List {
+            ForEach(TaskGroup.allCases.sorted(by: { $0.sortOrder < $1.sortOrder }), id: \.self) { group in
+                if let tasks = state.taskGroups[group], !tasks.isEmpty {
+                    Section(group.rawValue) {
+                        ForEach(tasks, id: \.id) { task in
+                            TaskRowView(task: task) {
+                                $state.send(.toggleTaskCompletion(task))
+                            } onEdit: {
+                                $state.send(.editTask(task))
+                            }
+                        }
+                        .onDelete { indexSet in
+                            for index in indexSet {
+                                $state.send(.deleteTask(tasks[index]))
+                            }
+                        }
+                        .onMove { source, destination in
+                            $state.send(.reorderTasks(group, source, destination))
+                        }
+                    }
+                }
+            }
+        }
+        .listStyle(InsetGroupedListStyle())
+        .refreshable {
+            $state.send(.refresh)
         }
     }
 }
 
-// MARK: - Preview
-#Preview("Loading") {
-    TodoListView(store: .preview(.init(), state: TodoFeature.State(tasks: .loading)))
-}
-
-#Preview("Success") {
-    let tasks = [
-        TodoTask(title: "Sample Task", description: "This is a sample task", dueDate: Date()),
-        TodoTask(title: "Completed Task", description: nil, dueDate: Date().addingTimeInterval(86400), isCompleted: true)
-    ]
-    TodoListView(store: .preview(.init(), state: TodoFeature.State(tasks: .success(tasks))))
-}
-
-#Preview("Error") {
-    TodoListView(store: .preview(.init(), state: TodoFeature.State(tasks: .failure("Network error occurred"))))
+#Preview {
+    TodoListView(store: .preview(.init(), state: TodoFeature.State(
+        taskGroups: [
+            .today: [
+                TodoTask(title: "Sample Task", subtitle: "This is a sample task", dueDate: Date())
+            ]
+        ]
+    )))
+    .modelContainer(ModelContainer.shared)
 }

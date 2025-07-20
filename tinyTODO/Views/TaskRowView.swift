@@ -4,7 +4,6 @@ struct TaskRowView: View {
     let task: TodoTask
     let onToggle: () -> Void
     let onEdit: () -> Void
-    let onDelete: () -> Void
 
     var body: some View {
         HStack {
@@ -13,6 +12,7 @@ struct TaskRowView: View {
                     .foregroundColor(task.isCompleted ? .green : .gray)
                     .font(.title2)
             }
+            .buttonStyle(PlainButtonStyle())
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(task.title)
@@ -20,30 +20,24 @@ struct TaskRowView: View {
                     .strikethrough(task.isCompleted)
                     .foregroundColor(task.isCompleted ? .secondary : .primary)
 
-                if let description = task.description {
-                    Text(description)
-                        .font(.caption)
+                if let subtitle = task.subtitle, !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(.subheadline)
                         .foregroundColor(.secondary)
-                        .lineLimit(2)
+                        .strikethrough(task.isCompleted)
                 }
 
-                Text(task.dueDate, style: .time)
+                Text(task.dueDate, style: .date)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
 
             Spacer()
-
-            HStack {
-                Button("Edit", action: onEdit)
-                    .font(.caption)
-                    .foregroundColor(.blue)
-
-                Button("Delete", action: onDelete)
-                    .font(.caption)
-                    .foregroundColor(.red)
-            }
         }
         .padding(.vertical, 4)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onEdit()
+        }
     }
 }

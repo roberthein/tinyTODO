@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		2F317F922E2BABBB00CB64FB /* tinyTCA in Frameworks */ = {isa = PBXBuildFile; productRef = 2F317F912E2BABBB00CB64FB /* tinyTCA */; };
-		2FA6F56E2E2D3DBB0085C138 /* tinyAPI in Frameworks */ = {isa = PBXBuildFile; productRef = 2FA6F56D2E2D3DBB0085C138 /* tinyAPI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -42,7 +41,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				2F317F922E2BABBB00CB64FB /* tinyTCA in Frameworks */,
-				2FA6F56E2E2D3DBB0085C138 /* tinyAPI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -118,7 +116,6 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				2F317F902E2BABBB00CB64FB /* XCLocalSwiftPackageReference "../tinyTCA" */,
-				2FA6F56C2E2D3DBB0085C138 /* XCLocalSwiftPackageReference "../tinyAPI" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2F317F752E2B7FC500CB64FB /* Products */;
@@ -359,10 +356,6 @@
 		2F317F902E2BABBB00CB64FB /* XCLocalSwiftPackageReference "../tinyTCA" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../tinyTCA;
-		};
-		2FA6F56C2E2D3DBB0085C138 /* XCLocalSwiftPackageReference "../tinyAPI" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../tinyAPI;
 		};
 /* End XCLocalSwiftPackageReference section */
 

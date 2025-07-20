@@ -1,55 +1,33 @@
 import Foundation
 import tinyTCA
-import tinyAPI
 
-// MARK: - Todo Feature
 struct TodoFeature: Feature {
-    struct State: Sendable, Equatable {
-        var tasks: RequestState<[TodoTask]> = .idle
-        var createTask: RequestState<TodoTask> = .idle
-        var updateTask: RequestState<TodoTask> = .idle
-        var deleteTask: RequestState<Bool> = .idle
-        var showingAddTask = false
+    struct State: Sendable {
+        var taskGroups: [TaskGroup: [TodoTask]] = [:]
+        var isLoading: Bool = false
+        var showingAddTask: Bool = false
         var editingTask: TodoTask?
+        var errorMessage: String?
 
-        var groupedTasks: [TaskGroup: [TodoTask]] {
-            guard case .success(let tasks) = tasks else { return [:] }
-
-            let grouped = Dictionary(grouping: tasks) { task in
-                TaskGroup.allCases.first { $0.contains(date: task.dueDate) } ?? .upcoming
-            }
-
-            return grouped.mapValues { tasks in
-                tasks.sorted { $0.order < $1.order }
-            }
-        }
-
-        var isLoading: Bool {
-            tasks.isLoading || createTask.isLoading || updateTask.isLoading || deleteTask.isLoading
-        }
-
-        var errorMessage: String? {
-            tasks.errorMessage ?? createTask.errorMessage ?? updateTask.errorMessage ?? deleteTask.errorMessage
-        }
+        // Repository is injected through the environment
+        static let repository = TodoRepository.shared
     }
 
     enum Action: Sendable {
+        case onAppear
         case loadTasks
-        case tasksResponse(Result<[TodoTask], TinyAPIError>)
-        case createTask(CreateTaskRequest)
-        case createTaskResponse(Result<TodoTask, TinyAPIError>)
-        case updateTask(id: UUID, task: UpdateTaskRequest)
-        case updateTaskResponse(Result<TodoTask, TinyAPIError>)
-        case deleteTask(id: UUID)
-        case deleteTaskResponse(Result<Bool, TinyAPIError>)
-        case toggleTask(id: UUID)
-        case toggleTaskResponse(Result<TodoTask, TinyAPIError>)
-        case reorderTasks([TodoTask], in: TaskGroup)
+        case tasksLoaded([TodoTask])
+        case addTask(title: String, subtitle: String?, dueDate: Date)
+        case updateTask(TodoTask, title: String, subtitle: String?, dueDate: Date)
+        case deleteTask(TodoTask)
+        case toggleTaskCompletion(TodoTask)
+        case reorderTasks(TaskGroup, IndexSet, Int)
         case showAddTask
         case hideAddTask
-        case editTask(TodoTask)
-        case clearEdit
-        case clearError
+        case editTask(TodoTask?)
+        case setError(String?)
+        case setLoading(Bool)
+        case refresh
     }
 
     var initialState: State {
@@ -58,82 +36,28 @@ struct TodoFeature: Feature {
 
     func reducer(state: inout State, action: Action) throws {
         switch action {
-        case .loadTasks:
-            state.tasks = .loading
+        case .onAppear, .refresh, .loadTasks:
+            state.isLoading = true
+            state.errorMessage = nil
 
-        case .tasksResponse(.success(let tasks)):
-            state.tasks = .success(tasks)
+        case let .tasksLoaded(tasks):
+            state.taskGroups = tasks.groupedByDueDate()
+            state.isLoading = false
 
-        case .tasksResponse(.failure(let error)):
-            state.tasks = .failure(error.localizedDescription)
-
-        case .createTask:
-            state.createTask = .loading
-
-        case .createTaskResponse(.success(let task)):
-            state.createTask = .success(task)
-            state.showingAddTask = false
-            // Add new task to existing list
-            if case .success(var existingTasks) = state.tasks {
-                existingTasks.append(task)
-                state.tasks = .success(existingTasks)
-            }
-
-        case .createTaskResponse(.failure(let error)):
-            state.createTask = .failure(error.localizedDescription)
+        case .addTask:
+            state.isLoading = true
 
         case .updateTask:
-            state.updateTask = .loading
+            state.isLoading = true
 
-        case .updateTaskResponse(.success(let updatedTask)):
-            state.updateTask = .success(updatedTask)
-            state.editingTask = nil
-            // Update task in existing list
-            if case .success(var existingTasks) = state.tasks {
-                if let index = existingTasks.firstIndex(where: { $0.id == updatedTask.id }) {
-                    existingTasks[index] = updatedTask
-                    state.tasks = .success(existingTasks)
-                }
-            }
-
-        case .updateTaskResponse(.failure(let error)):
-            state.updateTask = .failure(error.localizedDescription)
-
-        case .deleteTask:
-            state.deleteTask = .loading
-
-        case .deleteTaskResponse(.success):
-            state.deleteTask = .success(true)
-
-        case .deleteTaskResponse(.failure(let error)):
-            state.deleteTask = .failure(error.localizedDescription)
-
-        case .toggleTask:
-            // Optimistically update UI
+        case .deleteTask, .toggleTaskCompletion:
+            // Effects will handle the async operations
             break
 
-        case .toggleTaskResponse(.success(let updatedTask)):
-            // Update task in existing list
-            if case .success(var existingTasks) = state.tasks {
-                if let index = existingTasks.firstIndex(where: { $0.id == updatedTask.id }) {
-                    existingTasks[index] = updatedTask
-                    state.tasks = .success(existingTasks)
-                }
-            }
-
-        case .toggleTaskResponse(.failure(let error)):
-            state.tasks = .failure(error.localizedDescription)
-
-        case .reorderTasks(let reorderedTasks, in: let group):
-            if case .success(var existingTasks) = state.tasks {
-                // Update the order of tasks within the group
-                for (index, task) in reorderedTasks.enumerated() {
-                    if let taskIndex = existingTasks.firstIndex(where: { $0.id == task.id }) {
-                        existingTasks[taskIndex].order = index
-                    }
-                }
-                state.tasks = .success(existingTasks)
-            }
+        case let .reorderTasks(group, source, destination):
+            guard var tasks = state.taskGroups[group] else { return }
+            tasks.move(fromOffsets: source, toOffset: destination)
+            state.taskGroups[group] = tasks
 
         case .showAddTask:
             state.showingAddTask = true
@@ -141,76 +65,74 @@ struct TodoFeature: Feature {
         case .hideAddTask:
             state.showingAddTask = false
 
-        case .editTask(let task):
+        case let .editTask(task):
             state.editingTask = task
 
-        case .clearEdit:
-            state.editingTask = nil
+        case let .setError(message):
+            state.errorMessage = message
+            state.isLoading = false
 
-        case .clearError:
-            state.tasks = state.tasks.clearError()
-            state.createTask = .idle
-            state.updateTask = .idle
-            state.deleteTask = .idle
+        case let .setLoading(loading):
+            state.isLoading = loading
         }
     }
 
     func effect(for action: Action, state: State) async throws -> Action? {
-        let apiClient = APIClientDependency.mock.client
+        let repository = State.repository
 
         switch action {
-        case .loadTasks:
+        case .onAppear, .loadTasks, .refresh:
             do {
-                print("Loading tasks...")
-                let tasks = try await apiClient.request(TaskEndpoint.list, as: [TodoTask].self)
-                print("Successfully loaded \(tasks.count) tasks")
-                return .tasksResponse(.success(tasks))
-            } catch let error as TinyAPIError {
-                print("TinyAPIError: \(error)")
-                return .tasksResponse(.failure(error))
+                let tasks = try await repository.fetchTasks()
+                return .tasksLoaded(tasks)
             } catch {
-                print("General error: \(error)")
-                return .tasksResponse(.failure(.networkError(error.localizedDescription)))
+                return .setError(error.localizedDescription)
             }
 
-        case .createTask(let request):
+        case let .addTask(title, subtitle, dueDate):
             do {
-                let task = try await apiClient.request(TaskEndpoint.create(request), as: TodoTask.self)
-                return .createTaskResponse(.success(task))
-            } catch let error as TinyAPIError {
-                return .createTaskResponse(.failure(error))
+                let newTask = TodoTask(title: title, subtitle: subtitle, dueDate: dueDate)
+                try await repository.save(newTask)
+                let tasks = try await repository.fetchTasks()
+                return .tasksLoaded(tasks)
             } catch {
-                return .createTaskResponse(.failure(.networkError(error.localizedDescription)))
+                return .setError(error.localizedDescription)
             }
 
-        case .updateTask(let id, let taskRequest):
+        case let .updateTask(task, title, subtitle, dueDate):
             do {
-                let task = try await apiClient.request(TaskEndpoint.update(id: id, task: taskRequest), as: TodoTask.self)
-                return .updateTaskResponse(.success(task))
-            } catch let error as TinyAPIError {
-                return .updateTaskResponse(.failure(error))
+                try await repository.update(task, title: title, subtitle: subtitle, dueDate: dueDate)
+                let tasks = try await repository.fetchTasks()
+                return .tasksLoaded(tasks)
             } catch {
-                return .updateTaskResponse(.failure(.networkError(error.localizedDescription)))
+                return .setError(error.localizedDescription)
             }
 
-        case .deleteTask(let id):
+        case let .deleteTask(task):
             do {
-                let _ = try await apiClient.request(TaskEndpoint.delete(id: id), as: EmptyResponse.self)
-                return .deleteTaskResponse(.success(true))
-            } catch let error as TinyAPIError {
-                return .deleteTaskResponse(.failure(error))
+                try await repository.delete(task)
+                let tasks = try await repository.fetchTasks()
+                return .tasksLoaded(tasks)
             } catch {
-                return .deleteTaskResponse(.failure(.networkError(error.localizedDescription)))
+                return .setError(error.localizedDescription)
             }
 
-        case .toggleTask(let id):
+        case let .toggleTaskCompletion(task):
             do {
-                let task = try await apiClient.request(TaskEndpoint.toggle(id: id), as: TodoTask.self)
-                return .toggleTaskResponse(.success(task))
-            } catch let error as TinyAPIError {
-                return .toggleTaskResponse(.failure(error))
+                try await repository.toggleCompletion(task)
+                let tasks = try await repository.fetchTasks()
+                return .tasksLoaded(tasks)
             } catch {
-                return .toggleTaskResponse(.failure(.networkError(error.localizedDescription)))
+                return .setError(error.localizedDescription)
+            }
+
+        case let .reorderTasks(group, _, _):
+            guard let tasks = state.taskGroups[group] else { return nil }
+            do {
+                try await repository.updateSortOrders(for: tasks)
+                return nil
+            } catch {
+                return .setError(error.localizedDescription)
             }
 
         default:
