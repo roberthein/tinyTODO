@@ -1,7 +1,9 @@
 import Foundation
 import tinyTCA
 
+// The main feature for managing todo tasks, using The Composable Architecture (TCA) pattern.
 struct TodoFeature: Feature {
+    // State holds all data needed for the feature's UI and logic.
     struct State: Sendable {
         var taskGroups: [TaskGroup: [TodoTask]] = [:]
         var isLoading: Bool = false
@@ -9,10 +11,10 @@ struct TodoFeature: Feature {
         var editingTask: TodoTask?
         var errorMessage: String?
 
-        // Repository is injected through the environment
-        static let repository = TodoRepository.shared
+        static let repository = TodoRepository.shared // Data layer dependency
     }
 
+    // Actions represent all possible user and system events for this feature.
     enum Action: Sendable {
         case onAppear
         case loadTasks
@@ -34,6 +36,7 @@ struct TodoFeature: Feature {
         State()
     }
 
+    // Reducer: Synchronously updates state in response to actions.
     func reducer(state: inout State, action: Action) throws {
         switch action {
         case .onAppear, .refresh, .loadTasks:
@@ -44,14 +47,11 @@ struct TodoFeature: Feature {
             state.taskGroups = tasks.groupedByDueDate()
             state.isLoading = false
 
-        case .addTask:
-            state.isLoading = true
-
-        case .updateTask:
+        case .addTask, .updateTask:
             state.isLoading = true
 
         case .deleteTask, .toggleTaskCompletion:
-            // Effects will handle the async operations
+            // Async effects will handle these actions
             break
 
         case let .reorderTasks(group, source, destination):
@@ -77,6 +77,7 @@ struct TodoFeature: Feature {
         }
     }
 
+    // Effect: Handles async work (side effects) and can return a new action.
     func effect(for action: Action, state: State) async throws -> Action? {
         let repository = State.repository
 

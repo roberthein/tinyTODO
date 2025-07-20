@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 
+// The main data model representing a single todo task
 @Model
 final class TodoTask: @unchecked Sendable {
     var title: String

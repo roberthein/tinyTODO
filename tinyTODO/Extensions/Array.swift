@@ -1,11 +1,13 @@
 import Foundation
 
+// Safe subscript to avoid out-of-bounds errors
 extension Array {
     subscript(safe index: Int) -> Element? {
         return indices.contains(index) ? self[index] : nil
     }
 }
 
+// Extension for grouping TodoTask items by their due date into TaskGroups
 extension Array where Element == TodoTask {
     func groupedByDueDate() -> [TaskGroup: [TodoTask]] {
         let calendar = Calendar.current

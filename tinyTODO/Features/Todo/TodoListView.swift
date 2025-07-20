@@ -3,6 +3,7 @@ import tinyTCA
 import SwiftData
 
 struct TodoListView: View {
+    // Connects this view to the TCA store for TodoFeature
     @StoreState<TodoFeature> private var state: TodoFeature.State
 
     init(store: Store<TodoFeature>) {
@@ -22,10 +23,11 @@ struct TodoListView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Add") {
-                        $state.send(.showAddTask)
+                        $state.send(.showAddTask) // TCA: Dispatch action to show add task sheet
                     }
                 }
             }
+            // Sheet for adding a new task
             .sheet(
                 isPresented: .constant(state.showingAddTask),
                 onDismiss: {
@@ -41,6 +43,7 @@ struct TodoListView: View {
                     .modalConfiguration()
                 }
             )
+            // Sheet for editing an existing task
             .sheet(
                 item: .constant(state.editingTask),
                 onDismiss: {
@@ -56,6 +59,7 @@ struct TodoListView: View {
                     .modalConfiguration()
                 }
             )
+            // Error alert
             .alert("Error", isPresented: .constant(state.errorMessage != nil)) {
                 Button("OK") {
                     $state.send(.setError(nil))
@@ -63,12 +67,14 @@ struct TodoListView: View {
             } message: {
                 Text(state.errorMessage ?? "")
             }
+            // TCA: Triggers .onAppear action when view appears
             .task {
                 $state.send(.onAppear)
             }
         }
     }
 
+    // Main list content, grouped by TaskGroup
     @ViewBuilder
     private var taskListContent: some View {
         List {
@@ -77,18 +83,18 @@ struct TodoListView: View {
                     Section(group.rawValue) {
                         ForEach(tasks, id: \.id) { task in
                             TaskRowView(task: task) {
-                                $state.send(.toggleTaskCompletion(task))
+                                $state.send(.toggleTaskCompletion(task)) // TCA: Toggle completion
                             } onEdit: {
-                                $state.send(.editTask(task))
+                                $state.send(.editTask(task)) // TCA: Start editing
                             }
                         }
                         .onDelete { indexSet in
                             for index in indexSet {
-                                $state.send(.deleteTask(tasks[index]))
+                                $state.send(.deleteTask(tasks[index])) // TCA: Delete task
                             }
                         }
                         .onMove { source, destination in
-                            $state.send(.reorderTasks(group, source, destination))
+                            $state.send(.reorderTasks(group, source, destination)) // TCA: Reorder tasks
                         }
                     }
                 }
@@ -96,7 +102,7 @@ struct TodoListView: View {
         }
         .listStyle(InsetGroupedListStyle())
         .refreshable {
-            $state.send(.refresh)
+            $state.send(.refresh) // TCA: Refresh tasks
         }
     }
 }
