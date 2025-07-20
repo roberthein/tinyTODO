@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2F317F922E2BABBB00CB64FB /* tinyTCA in Frameworks */ = {isa = PBXBuildFile; productRef = 2F317F912E2BABBB00CB64FB /* tinyTCA */; };
+		2FE83A822E2D6B2900655998 /* tinyTCA in Frameworks */ = {isa = PBXBuildFile; productRef = 2FE83A812E2D6B2900655998 /* tinyTCA */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,7 +40,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2F317F922E2BABBB00CB64FB /* tinyTCA in Frameworks */,
+				2FE83A822E2D6B2900655998 /* tinyTCA in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -85,6 +85,7 @@
 			packageProductDependencies = (
 				2F317F912E2BABBB00CB64FB /* tinyTCA */,
 				2FA6F56D2E2D3DBB0085C138 /* tinyAPI */,
+				2FE83A812E2D6B2900655998 /* tinyTCA */,
 			);
 			productName = tinyTODO;
 			productReference = 2F317F742E2B7FC500CB64FB /* tinyTODO.app */;
@@ -115,7 +116,7 @@
 			mainGroup = 2F317F6B2E2B7FC500CB64FB;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				2F317F902E2BABBB00CB64FB /* XCLocalSwiftPackageReference "../tinyTCA" */,
+				2FE83A802E2D6B2900655998 /* XCRemoteSwiftPackageReference "tinyTCA" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2F317F752E2B7FC500CB64FB /* Products */;
@@ -352,12 +353,16 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCLocalSwiftPackageReference section */
-		2F317F902E2BABBB00CB64FB /* XCLocalSwiftPackageReference "../tinyTCA" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../tinyTCA;
+/* Begin XCRemoteSwiftPackageReference section */
+		2FE83A802E2D6B2900655998 /* XCRemoteSwiftPackageReference "tinyTCA" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/roberthein/tinyTCA";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.4;
+			};
 		};
-/* End XCLocalSwiftPackageReference section */
+/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		2F317F912E2BABBB00CB64FB /* tinyTCA */ = {
@@ -367,6 +372,11 @@
 		2FA6F56D2E2D3DBB0085C138 /* tinyAPI */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = tinyAPI;
+		};
+		2FE83A812E2D6B2900655998 /* tinyTCA */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2FE83A802E2D6B2900655998 /* XCRemoteSwiftPackageReference "tinyTCA" */;
+			productName = tinyTCA;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

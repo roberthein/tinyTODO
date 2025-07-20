@@ -7,6 +7,6 @@ struct ModalConfiguration: ViewModifier {
             .presentationBackground(.ultraThinMaterial)
             .presentationCornerRadius(24)
             .presentationDragIndicator(.visible)
-            .presentationDetents([.medium])
+            .presentationDetents([.height(300)])
     }
 }
