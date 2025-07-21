@@ -7,11 +7,11 @@ struct EditTaskView: View {
     @State private var dueDate: Date
     @Environment(\.dismiss) private var dismiss
 
-    let task: TodoTask
+    let task: TodoTaskData
     let onSave: (String, String?, Date) -> Void
     let onCancel: () -> Void
 
-    init(task: TodoTask, onSave: @escaping (String, String?, Date) -> Void, onCancel: @escaping () -> Void) {
+    init(task: TodoTaskData, onSave: @escaping (String, String?, Date) -> Void, onCancel: @escaping () -> Void) {
         self.task = task
         self.onSave = onSave
         self.onCancel = onCancel

@@ -8,12 +8,12 @@ extension Array {
 }
 
 // Extension for grouping TodoTask items by their due date into TaskGroups
-extension Array where Element == TodoTask {
-    func groupedByDueDate() -> [TaskGroup: [TodoTask]] {
+extension Array where Element == TodoTaskData {
+    func groupedByDueDate() -> [TaskGroup: [TodoTaskData]] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
 
-        var groups: [TaskGroup: [TodoTask]] = [
+        var groups: [TaskGroup: [TodoTaskData]] = [
             .overdue: [],
             .today: [],
             .upcoming: []

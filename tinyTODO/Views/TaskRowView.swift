@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct TaskRowView: View {
-    let task: TodoTask
+    let task: TodoTaskData
     let onToggle: () -> Void
     let onEdit: () -> Void
 

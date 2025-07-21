@@ -7,7 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2FE83A822E2D6B2900655998 /* tinyTCA in Frameworks */ = {isa = PBXBuildFile; productRef = 2FE83A812E2D6B2900655998 /* tinyTCA */; };
+		2F062A7E2E2E30E900CDEEF2 /* tinyCLOUD in Frameworks */ = {isa = PBXBuildFile; productRef = 2F062A7D2E2E30E900CDEEF2 /* tinyCLOUD */; };
+		2F062A812E2E312D00CDEEF2 /* tinyTCA in Frameworks */ = {isa = PBXBuildFile; productRef = 2F062A802E2E312D00CDEEF2 /* tinyTCA */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,7 +41,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2FE83A822E2D6B2900655998 /* tinyTCA in Frameworks */,
+				2F062A7E2E2E30E900CDEEF2 /* tinyCLOUD in Frameworks */,
+				2F062A812E2E312D00CDEEF2 /* tinyTCA in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -85,7 +87,8 @@
 			packageProductDependencies = (
 				2F317F912E2BABBB00CB64FB /* tinyTCA */,
 				2FA6F56D2E2D3DBB0085C138 /* tinyAPI */,
-				2FE83A812E2D6B2900655998 /* tinyTCA */,
+				2F062A7D2E2E30E900CDEEF2 /* tinyCLOUD */,
+				2F062A802E2E312D00CDEEF2 /* tinyTCA */,
 			);
 			productName = tinyTODO;
 			productReference = 2F317F742E2B7FC500CB64FB /* tinyTODO.app */;
@@ -116,7 +119,8 @@
 			mainGroup = 2F317F6B2E2B7FC500CB64FB;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				2FE83A802E2D6B2900655998 /* XCRemoteSwiftPackageReference "tinyTCA" */,
+				2F062A7C2E2E30E900CDEEF2 /* XCLocalSwiftPackageReference "../tinyCLOUD" */,
+				2F062A7F2E2E312D00CDEEF2 /* XCLocalSwiftPackageReference "../tinyTCA" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2F317F752E2B7FC500CB64FB /* Products */;
@@ -353,18 +357,26 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		2FE83A802E2D6B2900655998 /* XCRemoteSwiftPackageReference "tinyTCA" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/roberthein/tinyTCA";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.4;
-			};
+/* Begin XCLocalSwiftPackageReference section */
+		2F062A7C2E2E30E900CDEEF2 /* XCLocalSwiftPackageReference "../tinyCLOUD" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../tinyCLOUD;
 		};
-/* End XCRemoteSwiftPackageReference section */
+		2F062A7F2E2E312D00CDEEF2 /* XCLocalSwiftPackageReference "../tinyTCA" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../tinyTCA;
+		};
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		2F062A7D2E2E30E900CDEEF2 /* tinyCLOUD */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = tinyCLOUD;
+		};
+		2F062A802E2E312D00CDEEF2 /* tinyTCA */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = tinyTCA;
+		};
 		2F317F912E2BABBB00CB64FB /* tinyTCA */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = tinyTCA;
@@ -372,11 +384,6 @@
 		2FA6F56D2E2D3DBB0085C138 /* tinyAPI */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = tinyAPI;
-		};
-		2FE83A812E2D6B2900655998 /* tinyTCA */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 2FE83A802E2D6B2900655998 /* XCRemoteSwiftPackageReference "tinyTCA" */;
-			productName = tinyTCA;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

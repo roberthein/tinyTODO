@@ -1,6 +1,7 @@
 import SwiftUI
 import tinyTCA
 import SwiftData
+import tinyCLOUD
 
 struct TodoListView: View {
     // Connects this view to the TCA store for TodoFeature
@@ -71,6 +72,10 @@ struct TodoListView: View {
             .task {
                 $state.send(.onAppear)
             }
+            // Trigger sync with cloud when view appears
+            .task {
+                await CloudManager.shared.startSync()
+            }
         }
     }
 
@@ -105,15 +110,4 @@ struct TodoListView: View {
             $state.send(.refresh) // TCA: Refresh tasks
         }
     }
-}
-
-#Preview {
-    TodoListView(store: .preview(.init(), state: TodoFeature.State(
-        taskGroups: [
-            .today: [
-                TodoTask(title: "Sample Task", subtitle: "This is a sample task", dueDate: Date())
-            ]
-        ]
-    )))
-    .modelContainer(ModelContainer.shared)
 }

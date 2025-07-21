@@ -1,14 +1,20 @@
 import Foundation
 import SwiftData
+import tinyCLOUD
 
-// The main data model representing a single todo task
 @Model
-final class TodoTask: @unchecked Sendable {
-    var title: String
+final class TodoTask: CloudSyncable, @unchecked Sendable {
+    var title: String = ""
     var subtitle: String?
-    var dueDate: Date
-    var isCompleted: Bool
-    var sortOrder: Int
+    var dueDate: Date = Date()
+    var isCompleted: Bool = false
+    var sortOrder: Int = 0
+
+    // CloudSyncable requirements
+    var cloudKitRecordID: String?
+    var lastSyncDate: Date?
+    var lastModifiedDate: Date = Date()
+    var isDeleted: Bool = false
 
     init(title: String, subtitle: String? = nil, dueDate: Date, isCompleted: Bool = false, sortOrder: Int = 0) {
         self.title = title
@@ -16,5 +22,6 @@ final class TodoTask: @unchecked Sendable {
         self.dueDate = dueDate
         self.isCompleted = isCompleted
         self.sortOrder = sortOrder
+        self.lastModifiedDate = Date()
     }
 }

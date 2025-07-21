@@ -5,28 +5,28 @@ import tinyTCA
 struct TodoFeature: Feature {
     // State holds all data needed for the feature's UI and logic.
     struct State: Sendable {
-        var taskGroups: [TaskGroup: [TodoTask]] = [:]
+        var taskGroups: [TaskGroup: [TodoTaskData]] = [:]
         var isLoading: Bool = false
         var showingAddTask: Bool = false
-        var editingTask: TodoTask?
+        var editingTask: TodoTaskData?
         var errorMessage: String?
 
-        static let repository = TodoRepository.shared // Data layer dependency
+//        static let repository = TodoRepository.shared // Data layer dependency
     }
 
     // Actions represent all possible user and system events for this feature.
     enum Action: Sendable {
         case onAppear
         case loadTasks
-        case tasksLoaded([TodoTask])
+        case tasksLoaded([TodoTaskData])
         case addTask(title: String, subtitle: String?, dueDate: Date)
-        case updateTask(TodoTask, title: String, subtitle: String?, dueDate: Date)
-        case deleteTask(TodoTask)
-        case toggleTaskCompletion(TodoTask)
+        case updateTask(TodoTaskData, title: String, subtitle: String?, dueDate: Date)
+        case deleteTask(TodoTaskData)
+        case toggleTaskCompletion(TodoTaskData)
         case reorderTasks(TaskGroup, IndexSet, Int)
         case showAddTask
         case hideAddTask
-        case editTask(TodoTask?)
+        case editTask(TodoTaskData?)
         case setError(String?)
         case setLoading(Bool)
         case refresh
@@ -79,12 +79,13 @@ struct TodoFeature: Feature {
 
     // Effect: Handles async work (side effects) and can return a new action.
     func effect(for action: Action, state: State) async throws -> Action? {
-        let repository = State.repository
+//        let repository = try await TodoRepository.shared
+        let repository = try await TodoRepository.createShared()
 
         switch action {
         case .onAppear, .loadTasks, .refresh:
             do {
-                let tasks = try await repository.fetchTasks()
+                let tasks = try await repository.fetchTaskData()
                 return .tasksLoaded(tasks)
             } catch {
                 return .setError(error.localizedDescription)
@@ -94,7 +95,7 @@ struct TodoFeature: Feature {
             do {
                 let newTask = TodoTask(title: title, subtitle: subtitle, dueDate: dueDate)
                 try await repository.save(newTask)
-                let tasks = try await repository.fetchTasks()
+                let tasks = try await repository.fetchTaskData()
                 return .tasksLoaded(tasks)
             } catch {
                 return .setError(error.localizedDescription)
@@ -102,8 +103,8 @@ struct TodoFeature: Feature {
 
         case let .updateTask(task, title, subtitle, dueDate):
             do {
-                try await repository.update(task, title: title, subtitle: subtitle, dueDate: dueDate)
-                let tasks = try await repository.fetchTasks()
+                try await repository.update(taskID: task.id, title: title, subtitle: subtitle, dueDate: dueDate)
+                let tasks = try await repository.fetchTaskData()
                 return .tasksLoaded(tasks)
             } catch {
                 return .setError(error.localizedDescription)
@@ -111,8 +112,8 @@ struct TodoFeature: Feature {
 
         case let .deleteTask(task):
             do {
-                try await repository.delete(task)
-                let tasks = try await repository.fetchTasks()
+                try await repository.delete(taskID: task.id)
+                let tasks = try await repository.fetchTaskData()
                 return .tasksLoaded(tasks)
             } catch {
                 return .setError(error.localizedDescription)
@@ -120,8 +121,8 @@ struct TodoFeature: Feature {
 
         case let .toggleTaskCompletion(task):
             do {
-                try await repository.toggleCompletion(task)
-                let tasks = try await repository.fetchTasks()
+                try await repository.toggleCompletion(taskID: task.id)
+                let tasks = try await repository.fetchTaskData()
                 return .tasksLoaded(tasks)
             } catch {
                 return .setError(error.localizedDescription)
@@ -130,7 +131,7 @@ struct TodoFeature: Feature {
         case let .reorderTasks(group, _, _):
             guard let tasks = state.taskGroups[group] else { return nil }
             do {
-                try await repository.updateSortOrders(for: tasks)
+                try await repository.updateSortOrders(for: tasks.map { (id: $0.id, order: $0.sortOrder) })
                 return nil
             } catch {
                 return .setError(error.localizedDescription)
